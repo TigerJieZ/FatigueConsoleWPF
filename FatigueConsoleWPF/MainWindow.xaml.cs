@@ -10,6 +10,7 @@ using System.Windows;
 using Microsoft.VisualBasic;
 using Faigute_WPF;
 using System.Windows.Media.Imaging;
+using System.Text;
 
 namespace FatigueConsoleWPF
 {
@@ -606,56 +607,7 @@ namespace FatigueConsoleWPF
             this.myBodyIndex = this.getDriverIndex(frameData);
         }
 
-        /// <summary>
-        /// 绘制面部基本信息
-        /// </summary>
-        /// <param name="faceIndex"></param>
-        /// <param name="faceResult"></param>
-        /// <param name="drawingContext"></param>
-        private void DrawFaceFrameResults(int faceIndex, FaceFrameResult faceResult)
-        {
-            //this.myClock.soundPlayer();
-            //Console.Clear();
-            //Console.WriteLine("疲劳值为" + this.NumeFaigute);
-            //Console.WriteLine("当前跟踪的面部ID：" + this.myBodyIndex + "\n距离为：" + this.myBodyDepth);
-
-            if (this.NumeFaigute < 0.3)
-            {
-                // 轻度疲劳
-                this.now_level = 1;
-            }
-            else if (this.NumeFaigute < 0.5)
-            {
-                // 中度疲劳
-                this.now_level = 2;
-            }
-            else
-            {
-                // 重度疲劳
-                this.now_level = 3;
-            }
-
-            TimeSpan temp = DateTime.Now - current_dataTime;
-            if (temp.TotalSeconds > 1)
-            {
-                current_dataTime = DateTime.Now;
-                StreamWriter sw = new StreamWriter("data.txt", true);
-                sw.Write(this.NumeFaigute + " ");
-                sw.WriteLine(this.now_level);
-                sw.Close();
-            }
-
-            //若疲劳等级不变则不发送串口数据
-            if (this.now_level != this.current_level)
-            {
-                Console.WriteLine(this.now_level + "              " + this.current_level);
-                if (com.IsOpen)
-                {
-                    com.Write(this.now_level.ToString());
-                }
-                current_level = now_level;
-            }
-        }
+       
 
 
         /// <summary>
@@ -681,7 +633,6 @@ namespace FatigueConsoleWPF
                             this.NumeFaigute = this.myClock.Scheduler(this.faceFrameResults[this.myBodyIndex]);
                             drawFaceResult = true;
                             this.is_Face = true;
-                            this.DrawFaceFrameResults(this.myBodyIndex, this.faceFrameResults[this.myBodyIndex]);
                         }
                         else
                         {
@@ -955,6 +906,7 @@ namespace FatigueConsoleWPF
             if (com.IsOpen)
             {
                 com.Write("1");
+                this.debugOutput_text.Text += "发送了：1";
             }
         }
 
@@ -963,6 +915,7 @@ namespace FatigueConsoleWPF
             if (com.IsOpen)
             {
                 com.Write("2");
+                this.debugOutput_text.Text += "发送了：2";
             }
         }
 
@@ -971,6 +924,7 @@ namespace FatigueConsoleWPF
             if (com.IsOpen)
             {
                 com.Write("3");
+                this.debugOutput_text.Text += "发送了：3"; 
             }
         }
 
@@ -1002,6 +956,56 @@ namespace FatigueConsoleWPF
 
             // 更新疲劳状态图片
             updateFatigueImage();
+
+            // 更新疲劳监控
+            UpdateFatigueControl();
+        }
+
+        private void UpdateFatigueControl()
+        {
+            //this.myClock.soundPlayer();
+            //Console.Clear();
+            //Console.WriteLine("疲劳值为" + this.NumeFaigute);
+            //Console.WriteLine("当前跟踪的面部ID：" + this.myBodyIndex + "\n距离为：" + this.myBodyDepth);
+
+            if (this.NumeFaigute < 0.1)
+            {
+                // 轻度疲劳
+                this.now_level = 1;
+            }
+            else if (this.NumeFaigute < 0.3)
+            {
+                // 中度疲劳
+                this.now_level = 2;
+            }
+            else
+            {
+                // 重度疲劳
+                this.now_level = 3;
+            }
+
+            TimeSpan temp = DateTime.Now - current_dataTime;
+            if (temp.TotalSeconds > 1)
+            {
+                current_dataTime = DateTime.Now;
+                StreamWriter sw = new StreamWriter("data.txt", true);
+                sw.Write(this.NumeFaigute + " ");
+                sw.Write(this.now_level+" ");
+                DateTime date = DateTime.Now;
+                sw.WriteLine(date.ToString());
+                sw.Close();
+            }
+
+            //若疲劳等级不变则不发送串口数据
+            if (this.now_level != this.current_level)
+            {
+                this.com_text.Text += "\n从疲劳值"+this.now_level + "    转变成疲劳值" + this.current_level;
+                if (com.IsOpen)
+                {
+                    com.Write(this.now_level.ToString());
+                }
+                current_level = now_level;
+            }
         }
 
         // 更新调试输出栏
@@ -1027,12 +1031,14 @@ namespace FatigueConsoleWPF
             {
                 text += "极度疲劳";
             }
-            text += "\n-------------------------------------\n\n";
+            text += "\n-------------------------------------\n";
 
             // 输出左右眼闭合数
             text += "左眼闭合数：  "+this.myClock.getLeftEyeCloseLength()+"\n";
             text += "右眼闭合数" + this.myClock.getRightEyeCloseLength() + "\n";
             text += "眼睛仓库总长度" + this.myClock.getEyeLength() + "\n-----------------------------\n\n";
+
+            text+=
 
             this.debugOutput_text.Text = text;
         }
@@ -1207,6 +1213,15 @@ namespace FatigueConsoleWPF
                 bi.EndInit();
                 image.Source = bi;
                 image1.Source = bi;
+            }
+        }
+
+        private void button_Click_4(object sender, RoutedEventArgs e)
+        {
+            if (com.IsOpen)
+            {
+                com.Write("4");
+                this.debugOutput_text.Text += "发送了：4";
             }
         }
     }
